@@ -10,6 +10,7 @@ int main() {
 	using google::pubsub::v1::PullResponse;
 	using google::pubsub::v1::StreamingPullRequest;
 	using google::pubsub::v1::StreamingPullResponse;
+	using google::pubsub::v1::PubsubMessage;
 
 	auto credentials = grpc::GoogleDefaultCredentials();	
 	auto channel = grpc::CreateChannel("pubsub.googleapis.com", credentials);
@@ -32,7 +33,10 @@ int main() {
 		for (const auto &message : response.received_messages()) {
    			ack_request.add_ack_ids(message.ack_id());
 			std::cout<<"message received and acknowledged"<<std::endl;
-			//std::cout<<message<<std::endl; //figure out how to properly get message text
+			bool hasMessage = message.has_message();
+			if (hasMessage) {
+				std::cout<<"message: "<<message.message().data()<<std::endl;
+			}
 		}
 		stream->Write(ack_request);
 	}

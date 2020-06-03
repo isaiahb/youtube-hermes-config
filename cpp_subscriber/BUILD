@@ -20,16 +20,15 @@ load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_proto_library")
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
-
 cc_binary(
-    name = "main",
-    srcs = [
-        "main.cc",
-    ],
-    deps = [
-		"@com_github_grpc_grpc//:grpc++",
-        "@com_google_googleapis//google/pubsub/v1:pubsub_cc_grpc",
-    ],
+  name = "main",
+  srcs = [
+    "main.cc",
+  ],
+  deps = [
+    "@com_github_grpc_grpc//:grpc++",
+    "@com_google_googleapis//google/pubsub/v1:pubsub_cc_grpc",
+  ],
 )
 
 

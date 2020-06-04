@@ -2,6 +2,10 @@
 #include <memory>
 #include <grpc++/grpc++.h>
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
+#include<thread>
+#include<chrono>
+
+void Process(std::string);
 
 int main() {
 	using grpc::ClientContext;
@@ -26,20 +30,32 @@ int main() {
 	stream->Write(request);
 
 	// poll for messages.
+	int i = 0;
 	StreamingPullResponse response;
-	while (stream->Read(&response)) {
-		// acknowledged messages.
-		StreamingPullRequest ack_request;
-		for (const auto &message : response.received_messages()) {
-   			ack_request.add_ack_ids(message.ack_id());
-			std::cout<<"message received and acknowledged"<<std::endl;
-			bool hasMessage = message.has_message();
-			if (hasMessage) {
-				std::cout<<"message: "<<message.message().data()<<std::endl;
-			}
-		}
-		stream->Write(ack_request);
-	}
 
+	//keep alive for duration of machines life
+	while (true) {
+		while (stream->Read(&response)) {
+			i++;
+			std::cout<<"Reading: "<<i<<std::endl;
+			StreamingPullRequest ack_request;
+			for (const auto &message : response.received_messages()) {
+				ack_request.add_ack_ids(message.ack_id());
+				bool hasMessage = message.has_message();
+				if (hasMessage) {
+					Process(message.message().data());
+				}
+			}
+			
+			// acknowledged messages.
+			stream->Write(ack_request);
+		}
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
 	std::cout<<"program finished"<<std::endl;
+}
+
+
+void Process(std::string message) {
+	std::cout<<"message received: "<<message<<std::endl;
 }

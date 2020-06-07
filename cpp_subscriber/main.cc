@@ -81,6 +81,6 @@ void Process(google::pubsub::v1::PubsubMessage message) {
 			cout << "Queue-Info: Owners: " << owners << endl;
 			break;
 		default :
-		cout << "Invalid Configuration. The value of message's data must be one of the following (Enqueue-Rule, Routing-Rule, Queue-Info)" << endl;
+		cout << "Invalid Configuration. The value of message's data must be one of the following (EnqueueRule, RoutingRule, QueueInfo)" << endl;
 	}
 }

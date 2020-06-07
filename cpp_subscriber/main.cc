@@ -5,7 +5,7 @@
 #include<thread>
 #include<chrono>
 
-void Process(std::string);
+void Process(google::pubsub::v1::PubsubMessage message);
 
 int main() {
 	using grpc::ClientContext;
@@ -64,23 +64,21 @@ void Process(google::pubsub::v1::PubsubMessage message) {
 	Map<string, string> attributes = message.attributes();
 	cout<<"data: "<<data<<endl<<endl;
 
-
-	switch(data) {
-		case "EnqueueRule" :
-			string features = attributes["Features"];
-			string queue = attributes["Queue"];
-			cout << "EnqueueRule: " << features << " -> " << queue << endl;
-			break;
-		case "RoutingRule" :
-			string possibleRoutes = attributes["PossibleRoutes"];
-			string queue = attributes["Queue"];
-			cout << "RoutingRule: " << queue << " -> " << possibleRoutes << endl;
-			break;
-		case "QueueInfo" :
-			string owners = attributes["Owners"];
-			cout << "Queue-Info: Owners: " << owners << endl;
-			break;
-		default :
+	if (data == "EnqueueRule") {
+		string features = attributes["Features"];
+		string queue = attributes["Queue"];
+		cout << "EnqueueRule: " << features << " -> " << queue << endl;
+	}
+	else if (data == "RoutingRule") {
+		string possibleRoutes = attributes["PossibleRoutes"];
+		string queue = attributes["Queue"];
+		cout << "RoutingRule: " << queue << " -> " << possibleRoutes << endl;
+	}
+	else if (data == "QueueInfo") {
+		string owners = attributes["Owners"];
+		cout << "Queue-Info: Owners: " << owners << endl;
+	}
+	else {
 		cout << "Invalid Configuration. The value of message's data must be one of the following (EnqueueRule, RoutingRule, QueueInfo)" << endl;
 	}
 }

@@ -37,13 +37,12 @@ int main() {
 		stream->Write(request);
 
 		while (stream->Read(&response)) {
-			std::cout<<"Reading: "<<std::endl;
 			StreamingPullRequest ack_request;
 			for (const auto &message : response.received_messages()) {
 				ack_request.add_ack_ids(message.ack_id());
 				bool hasMessage = message.has_message();
 				if (hasMessage) {
-					Process(message.message().data());
+					Process(message.message());
 				}
 			}
 			
@@ -54,6 +53,34 @@ int main() {
 	std::cout<<"program ending"<<std::endl;
 }
 
-void Process(std::string message) {
-	std::cout<<"message received: "<<message<<std::endl;
+void Process(google::pubsub::v1::PubsubMessage message) {
+	using google::protobuf::Map;
+	using google::pubsub::v1::PubsubMessage;
+	using std::string;
+	using std::cout;
+	using std::endl;
+
+	string data = message.data();
+	Map<string, string> attributes = message.attributes();
+	cout<<"data: "<<data<<endl<<endl;
+
+
+	switch(data) {
+		case "EnqueueRule" :
+			string features = attributes["Features"];
+			string queue = attributes["Queue"];
+			cout << "EnqueueRule: " << features << " -> " << queue << endl;
+			break;
+		case "RoutingRule" :
+			string possibleRoutes = attributes["PossibleRoutes"];
+			string queue = attributes["Queue"];
+			cout << "RoutingRule: " << queue << " -> " << possibleRoutes << endl;
+			break;
+		case "QueueInfo" :
+			string owners = attributes["Owners"];
+			cout << "Queue-Info: Owners: " << owners << endl;
+			break;
+		default :
+		cout << "Invalid Configuration. The value of message's data must be one of the following (Enqueue-Rule, Routing-Rule, Queue-Info)" << endl;
+	}
 }

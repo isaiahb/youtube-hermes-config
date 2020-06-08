@@ -11,8 +11,8 @@
 ### Example
 ```
 Configuration: EnqueueRule
-Features: f1, f2, f3, f4, f5, f6
 Queue: Q3
+Features: f1, f2, f3, f4, f5, f6
 ```
 
 ---

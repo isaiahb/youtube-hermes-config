@@ -31,8 +31,6 @@
 
 const char kSubscriptionsLink[] = "projects/google.com:youtube-admin-pacing-server/subscriptions/CppBinary";
 const int kSecondsToKeepClientAlive = 1200;
-void spanner();
-void getQueues();
 
 int main() {
   using youtube_hermes_config_subscriber::getAllVideos;
@@ -64,57 +62,4 @@ int main() {
   
   client.JoinThread();
   std::cout << "Program Terminating" << std::endl;
-}
-
-//Project ID google.com:youtube-admin-pacing-server
-const char* PROJECT_ID = "google.com:youtube-admin-pacing-server";
-const char* INSTANCE_ID = "historicaltraffic";
-const char* DATABASE_ID = "historical_traffic";
-
-void spanner() {
-  namespace spanner = ::google::cloud::spanner;
-  auto database = spanner::Database(PROJECT_ID, INSTANCE_ID, DATABASE_ID);
-  auto connection = spanner::MakeConnection(database);
-  auto client = spanner::Client(connection);
-
-  spanner::SqlStatement select("SELECT Id, QueueName FROM Queues");
-  using RowType = std::tuple<std::string, std::string>;
-  auto rows = client.ExecuteQuery(std::move(select));
-  for (auto const& row : spanner::StreamOf<RowType>(rows)) {
-    if (!row) throw std::runtime_error(row.status().message());
-    std::cout << "Id: " << std::get<0>(*row) << "\t";
-    std::cout << "QueueName: " << std::get<1>(*row) << "\n";
-  }
-
-  std::cout << "Query completed for [spanner_query_data]\n";
-}
-
-void getQueues() {
-  namespace spanner = ::google::cloud::spanner;
-  auto database = spanner::Database(PROJECT_ID, INSTANCE_ID, DATABASE_ID);
-  auto connection = spanner::MakeConnection(database);
-  auto client = spanner::Client(connection);
-  auto rows = client.Read("Queues", spanner::KeySet::All(), {"Id", "DesiredSLA_min", "Owners", "PossibleRoutes", "QueueName"});
-
-    // The actual type of `row` is google::cloud::StatusOr<spanner::Row>, but
-    // we expect it'll most often be declared with auto like this.
-    for (auto const& row : rows) {
-      // Use `row` like a smart pointer; check it before dereferencing
-      if (!row) {
-        // `row` doesn't contain a value, so `.status()` will contain error info
-        std::cerr << row.status();
-        break;
-      }
-      // The actual type of `song` is google::cloud::StatusOr<std::string>, but
-      // again we expect it'll be commonly declared with auto as we show here.
-      auto id = row->get<std::string>("Id");
-      auto queue_name = row->get<std::string>("QueueName");
-      
-      // Instead of checking then dereferencing `song` as we did with `row`
-      // above, here we demonstrate use of the `.value()` member, which will
-      // return a reference to the contained `T` if it exists, otherwise it
-      // will throw an exception (or terminate if compiled without exceptions).
-      std::cout << "QueueName: " << queue_name.value();
-      std::cout << ", Id: " << id.value() << "\n";
-    }
 }

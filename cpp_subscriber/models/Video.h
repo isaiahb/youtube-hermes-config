@@ -27,9 +27,6 @@ class Video {
 
   explicit Video(){}
 
-  /// No default construction.
-  Video() = delete;
-
   std::string id;
   std::vector<std::string> features;
 

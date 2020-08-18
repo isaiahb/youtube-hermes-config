@@ -28,6 +28,7 @@
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
 #include "absl/strings/string_view.h"
 
+
 namespace youtube_hermes_config_subscriber {
 
 std::string getErrorImpactAnalysis(const ConfigChangeRequest config_change_request, const std::string error) {
@@ -57,7 +58,6 @@ std::string getDummyImpactAnalysis(const ConfigChangeRequest config_change_reque
   // end_time->set_nanos(0);
 
 
-  //Todo add dummy queue-impact objects to impact analysis object.
   for (int i = 0; i < 10; i++) {
     QueueImpactAnalysis* queue_impact_analysis = impact_analysis.add_queue_impact_analysis_list();
     queue_impact_analysis->set_queue_id(std::to_string(i));

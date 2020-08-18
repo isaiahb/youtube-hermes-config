@@ -22,16 +22,25 @@ load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 cc_library(
   name = "subscriber-lib",
-  srcs = ["client.cc", "mock_message.cc", "proto/config_change.pb.cc", "proto/impact_analysis_response.pb.cc", "publisher.cc"],
-  hdrs = ["client.h", "processor.h", "publisher.h", "mock_message.h", "proto/config_change.pb.h", "proto/impact_analysis_response.pb.h"],
-  # srcs = ["client.cc", "mock_message.cc"],
-  # hdrs = ["client.h", "processor.h", "publisher.h", "mock_message.h"],
+  srcs = [
+    "spanner_handler.cc",
+    "client.cc", "mock_message.cc", "proto/config_change.pb.cc", "proto/impact_analysis_response.pb.cc", "publisher.cc"],
+  hdrs = [
+    "models/EnqueueRule.h",
+    "models/EnqueueSignal.h",
+    "models/Queue.h",
+    "models/RoutingSignal.h",
+    "models/VerdictSignal.h",
+    "models/Video.h",
+    "spanner_handler.h",
+    "impact.h",
+    "client.h", "processor.h", "publisher.h", "mock_message.h", "proto/config_change.pb.h", "proto/impact_analysis_response.pb.h"],
+
   deps = [
     "@com_github_grpc_grpc//:grpc++",
     "@com_google_googleapis//google/pubsub/v1:pubsub_cc_grpc",
+    "@com_github_googleapis_google_cloud_cpp//:spanner_client",
 	  "@com_google_absl//absl/strings",
-    # ":config_change_cc_proto",
-    # ":impact_proto_cc_proto"
   ],
 )
 

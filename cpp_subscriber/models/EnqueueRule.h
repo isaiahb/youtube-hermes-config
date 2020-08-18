@@ -23,15 +23,16 @@ namespace youtube_hermes_config_subscriber {
 class EnqueueRule {
  public:
 
-  explicit EnqueueRule(){}
+  // explicit EnqueueRule(std::string id, std::string queue_id, std::vector<std::string>, int priority)
+  // :id(id), queue_id(queue_id), rule(rule), priority(priority) {}
 
-  /// No default construction.
-  EnqueueRule() = delete;
+  // /// No default construction.
+  // EnqueueRule() = delete;
 
   std::string id;
-  int priority;
   std::string queue_id;
   std::vector<std::string> rule;
+  std::int64_t priority;
 };
 
 }  // namespace youtube_hermes_config_subscriber

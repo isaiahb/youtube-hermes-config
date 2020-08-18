@@ -25,14 +25,11 @@ class Queue {
 
   explicit Queue(){}
 
-  /// No default construction.
-  Queue() = delete;
-
   std::string id;
   std::string queue_name;
   int desired_SLA;
   std::vector<std::string> owners;
-  std::vector<int> possible_routes;
+  std::vector<std::int64_t> possible_routes;
 };
 
 }  // namespace youtube_hermes_config_subscriber

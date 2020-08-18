@@ -20,12 +20,14 @@
 
 #include "absl/memory/memory.h"
 #include "client.h"
-#include "config_type.pb.h"
+#include "proto/config_change.pb.h"
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
 #include "google/cloud/spanner/client.h"
 
 #include "mock_message.h"
 #include "processor.h"
+#include "spanner_handler.h"
+#include "impact.h"
 
 const char kSubscriptionsLink[] = "projects/google.com:youtube-admin-pacing-server/subscriptions/CppBinary";
 const int kSecondsToKeepClientAlive = 1200;
@@ -33,8 +35,16 @@ void spanner();
 void getQueues();
 
 int main() {
-  // spanner();
-  getQueues();
+  using youtube_hermes_config_subscriber::getAllVideos;
+  using youtube_hermes_config_subscriber::getAllVerdictSignals;
+  using youtube_hermes_config_subscriber::getAllRoutingSignals;
+  using youtube_hermes_config_subscriber::getAllEnqueueSignals;
+  using youtube_hermes_config_subscriber::getAllQueues;
+  using youtube_hermes_config_subscriber::getAllEnqueueRules;
+  using youtube_hermes_config_subscriber::getImpactAnalysis;
+
+  ConfigChangeRequest config_change_request;
+  getImpactAnalysis(config_change_request);
 
   // Creates a Client that polls pubsub and Runs it 
   // passing the MessageProcessor function as a callback.

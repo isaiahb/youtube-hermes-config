@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include "google/cloud/spanner/timestamp.h"
 
 namespace youtube_hermes_config_subscriber {
 
@@ -25,11 +26,8 @@ class VerdictSignal {
 
   explicit VerdictSignal(){}
 
-  /// No default construction.
-  VerdictSignal() = delete;
-
   std::string life_cycle_id;
-  int create_time;
+  google::cloud::spanner::v1::Timestamp create_time;
   std::string queue_id;
   int SLA_min;
 };

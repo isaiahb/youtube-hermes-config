@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include "google/cloud/spanner/timestamp.h"
 
 namespace youtube_hermes_config_subscriber {
 
@@ -25,11 +26,8 @@ class EnqueueSignal {
 
   explicit EnqueueSignal(){}
 
-  /// No default construction.
-  EnqueueSignal() = delete;
-
   std::string life_cycle_id;
-  int create_time;
+  google::cloud::spanner::v1::Timestamp create_time;
   std::string queue_match;
   std::string video_id;
   std::string violation_category;

@@ -28,6 +28,7 @@
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
 #include "absl/strings/string_view.h"
 
+
 namespace youtube_hermes_config_subscriber {
 
 std::string getErrorImpactAnalysis(const ConfigChangeRequest& config_change_request, const std::string& error) {
@@ -48,6 +49,14 @@ std::string getDummyImpactAnalysis(const ConfigChangeRequest& config_change_requ
 
   ImpactAnalysisResponse impact_analysis;
   impact_analysis.set_allocated_request(new ConfigChangeRequest(config_change_request));
+
+  // Timestamp* start_time = new Timestamp(); 
+  // Timestamp* end_time = new Timestamp(); 
+  // start_time->set_seconds(time(NULL));
+  // start_time->set_nanos(0);
+  // end_time->set_seconds(time(NULL) + 216000);
+  // end_time->set_nanos(0);
+
 
   for (int i = 0; i < 10; i++) {
     QueueImpactAnalysis* queue_impact_analysis = impact_analysis.add_queue_impact_analysis_list();

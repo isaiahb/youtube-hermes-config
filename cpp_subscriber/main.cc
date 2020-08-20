@@ -17,40 +17,49 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <string>
-#include <stdlib.h>
-
-#include <fstream>
 
 #include "absl/memory/memory.h"
 #include "client.h"
 #include "proto/config_change.pb.h"
-#include "proto/impact_analysis_response.pb.h"
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
+#include "google/cloud/spanner/client.h"
 
 #include "mock_message.h"
 #include "processor.h"
-#include "publisher.h"
+#include "spanner_handler.h"
+#include "impact.h"
 
 const char kSubscriptionsLink[] = "projects/google.com:youtube-admin-pacing-server/subscriptions/CppBinary";
-const char kPublisherTopicLink[] = "projects/google.com:youtube-admin-pacing-server/topics/TestImpactAnalysisResponse";
-const char kImpactFilePath[] = "/Users/isaiah/Dev/Google/youtube-hermes-config/cpp_subscriber/impact.txt";
-
 const int kSecondsToKeepClientAlive = 1200;
 
 int main() {
+  using youtube_hermes_config_subscriber::getAllVideos;
+  using youtube_hermes_config_subscriber::getAllVerdictSignals;
+  using youtube_hermes_config_subscriber::getAllRoutingSignals;
+  using youtube_hermes_config_subscriber::getAllEnqueueSignals;
+  using youtube_hermes_config_subscriber::getAllQueues;
+  using youtube_hermes_config_subscriber::getAllEnqueueRules;
+  using youtube_hermes_config_subscriber::getImpactAnalysis;
+
+  ConfigChangeRequest config_change_request;
+  getImpactAnalysis(config_change_request);
 
   // Creates a Client that polls pubsub and Runs it 
   // passing the MessageProcessor function as a callback.
   using google::pubsub::v1::PubsubMessage;
   using youtube_hermes_config_subscriber::Client;
   using youtube_hermes_config_subscriber::MessageProcessor;
-  
+
   Client client = Client(kSubscriptionsLink);
   client.Run(MessageProcessor<PubsubMessage>);
+  std::this_thread::sleep_for(std::chrono::seconds(kSecondsToKeepClientAlive));
 
-  // Join the thread from the client in order to keep the program running.
+  // Currently it takes around 30 seconds for the stream object in the client 
+  // to close after calling this Stop method.
+  // We will not need to call Stop in production,
+  // in Prodoction the client will run indefinitly.
+  client.Stop();
+  
   client.JoinThread();
   std::cout << "Program Terminating" << std::endl;
-  return 0;
 }

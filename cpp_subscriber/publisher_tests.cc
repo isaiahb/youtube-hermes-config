@@ -1,0 +1,85 @@
+#include <google/protobuf/util/message_differencer.h>
+#include <grpc++/grpc++.h>
+
+#include <vector>
+
+#include "proto/config_change.pb.h"
+#include "gtest/gtest.h"
+#include "mock_message.h"
+#include "processor.h"
+
+const char kPublisherTopicLink[] = "projects/google.com:youtube-admin-pacing-server/topics/TestImpactAnalysisResponse";
+
+TEST(Publisher, PublishMessage) {
+  using youtube_hermes_config_subscriber::getDummyImpactAnalysis;
+  using youtube_hermes_config_subscriber::PublishMessage;
+  using grpc::Status;
+  ConfigChangeRequest request;
+
+  Status status = PublishMessage(getDummyImpactAnalysis(request), kPublisherTopicLink);
+
+  EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
+}
+
+TEST(MessageProcessor, RoutingRuleTest) {
+  using google::protobuf::util::MessageDifferencer;
+  using google::protobuf::util::Status;
+  using google::protobuf::util::StatusOr;
+  using youtube_hermes_config_subscriber::MessageProcessor;
+  using youtube_hermes_config_subscriber::MockMessage;
+
+  // Create ConfigChangeRequest object for MockMessage to serialize to string.
+  ConfigChangeRequest config;
+  RoutingRule_Change* change = config.mutable_routing_rule()->add_changes();
+  change->set_method("Add");
+  change->set_queue("q1");
+  change->add_possible_routes("q2");
+  change->add_possible_routes("q3");
+  change->add_possible_routes("q4");
+
+  // Create MockMessage and obtain deserialized config request from MessageProcessor function.
+  MockMessage message = MockMessage(config);
+  StatusOr<ConfigChangeRequest> request = MessageProcessor<MockMessage>(message);
+  ConfigChangeRequest config_change_request = request.ValueOrDie();
+
+  EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
+}
+
+TEST(MessageProcessor, QueueInfoTest) {
+  using google::protobuf::util::MessageDifferencer;
+  using google::protobuf::util::Status;
+  using google::protobuf::util::StatusOr;
+  using youtube_hermes_config_subscriber::MessageProcessor;
+  using youtube_hermes_config_subscriber::MockMessage;
+
+  // Create ConfigChangeRequest object for MockMessage to serialize to string.
+  ConfigChangeRequest config;
+  QueueInfo_Change* change = config.mutable_queue_info()->add_changes();
+  change->set_method("Add");
+  change->set_queue("q1");
+  change->add_owner("isaiah");
+  change->add_owner("saulo");
+
+  // Create MockMessage and obtain deserialized config request from MessageProcessor function.
+  MockMessage message = MockMessage(config);
+  StatusOr<ConfigChangeRequest> request = MessageProcessor<MockMessage>(message);
+  ConfigChangeRequest config_change_request = request.ValueOrDie();
+
+  EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
+}
+
+TEST(MessageProcessor, InvalidTest) {
+  using google::protobuf::util::Status;
+  using google::protobuf::util::StatusOr;
+  using youtube_hermes_config_subscriber::MessageProcessor;
+  using youtube_hermes_config_subscriber::MockMessage;
+
+  // Create Empty/Invalid ConfigChangeRequest object for MockMessage to serialize to string.
+  ConfigChangeRequest config;
+
+  // Create MockMessage and obtain deserialized config request from MessageProcessor function.
+  MockMessage message = MockMessage(config);
+  StatusOr<ConfigChangeRequest> config_change_request = MessageProcessor<MockMessage>(message);
+
+  EXPECT_FALSE(config_change_request.ok());
+}

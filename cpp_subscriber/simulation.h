@@ -43,7 +43,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
-
+// TODO(ballah): Refactor file into multiple smaller files.
 namespace youtube_hermes_config_subscriber {
   // Vectors
   using EnqueueSignals = std::vector<EnqueueSignal>;
@@ -87,43 +87,175 @@ namespace youtube_hermes_config_subscriber {
       index++;
     }
   }
-
-  class Reviewer {
+  
+  class Signal {
    public:
-    explicit Reviewer(Queue* queue) : queue(queue){}
-    Queue* queue;
+    explicit Signal(RoutingSignal signal) : routing_signal(signal), has_routing(true), timestamp(signal.create_time) {}
+    explicit Signal(EnqueueSignal signal) : enqueue_signal(signal), has_enqueue(true), timestamp(signal.create_time) {}
+    explicit Signal(VerdictSignal signal) : verdict_signal(signal), has_verdict(true), timestamp(signal.create_time) {}
+    
+    // TODO(Ballah): Delete default constructor.
 
-    void Update(const Timestamp& timestamp, QueueMap& queue_map, RoutingSignals& routing_signals, VerdictSignals& verdict_signals) {
-      if (reviewing_video == nullptr) {
-        // Check that there are videos to take from the queue.
-        if (queue->review_queue.empty()) return;
+    bool has_routing_signal() { return has_routing; }
+    bool has_enqueue_signal() { return has_enqueue; }
+    bool has_verdict_signal() { return has_verdict; }
+    
+    Timestamp GetTimestamp() { return timestamp; }
+    void SetTimestamp(Timestamp timestamp) { this->timestamp = timestamp; }
 
-        // We're free to take a video from the queue to review.
-        reviewing_video = queue->review_queue.front();
-        review_queue.pop();
-
-        // TODO(ballah): check when video was enqueued, keep track of last_review_finished time 
-        // and determine correct timestamp to use for start_review_time.
-        start_review_time = timestamp;
-      } else {
-        // TODO(ballah): determine correct way to add minutes to timestamp before comparing
-        if ((timestamp + average_review_minutes) <= timestamp) {
-          // Enough time has past too handle review entitiy.
-          // Create verdict or routing signal.
-          VerdictSignal verdict_signal;
-          verdict_signal.life_cycle_id = 
-        }
+    std::string GetQueueId() {
+      if (has_routing) {
+        return routing_signal->to_queue;
+      } 
+      else if (has_enqueue) {
+        return enqueue_signal->queue_match;
+      }
+      else {
+        return verdict_signal->queue_id;
       }
     }
 
+    std::string GetLifeCycleId() {
+      if (has_routing) {
+        return routing_signal->life_cycle_id;
+      } 
+      else if (has_enqueue) {
+        return enqueue_signal->life_cycle_id;
+      }
+      else {
+        return verdict_signal->life_cycle_id;
+      }
+    }
+
+    RoutingSignal GetRoutingSignal(){ return routing_signal; }
+    EnqueueSignal GetEnqueueSignal(){ return enqueue_signal; }
+    VerdictSignal GetVerdictSignal(){ return verdict_signal; }
 
    private:
-    Video* reviewing_video;
+    bool has_routing = false;
+    bool has_enqueue = false;
+    bool has_verdict = false;
+
+    RoutingSignal routing_signal;
+    EnqueueSignal enqueue_signal;
+    VerdictSignal verdict_signal;
+    Timestamp timestamp;
+  }
+
+  // custom_priority_queue_MinHeap
+  class CompareSignals{
+   public:
+    bool operator()(const Signal &a, const Signal &b) {
+      return a.timestamp < b.timestamp;
+    }
+  };
+
+  class Heap : public std::priority_queue<Signal, std::vector<Signal>, CompareSignals> {
+    public:
+    bool remove(const Signal& value) {
+      auto it = std::find(this->c.begin(), this->c.end(), value);
+      if (it != this->c.end()) {
+          this->c.erase(it);
+          std::make_heap(this->c.begin(), this->c.end(), this->comp);
+          return true;
+      }
+
+      return false;
+    }
+  };
+
+
+  class Reviewer {
+   public:
+    explicit Reviewer() {}
+
+    Signal ReviewEntity(Signal& signal, VerdictSignal& old_verdict) {
+      start_review_time = signal.GetTimestamp();
+      reviewing_video = true;
+      // check if the entity is in correct queue.
+      // determine correct verdict.
+
+      // If entity is in correct queue, create new verdict signal.
+      if (signal.GetQueueId == old_verdict.queue_id) {
+        VerdictSignal new_verdict;
+        new_verdict.life_cycle_id = signal.GetLifeCycleId();
+        new_verdict.create_time = GetNotBusyTime();
+        new_verdict.queue_id = signal.GetQueueId();
+        return Signal(new_verdict);
+      }
+      else {
+        // Entity is in wrong queue so create a routing signal.
+        RouingSignal routing_signal;
+        routing_signal.life_cycle_id = signal.GetLifeCycleId();
+        routing_signal.create_time = GetNotBusyTime();
+        routing_signal.from_queue  = signal.GetQueueId();
+        routing_signal.to_queue  = old_verdict.queue_id;
+        return Signal(routing_signal);
+      }
+    }
+
+    bool IsBusy(Timestamp timestamp) {
+      if (!reviewing_video) return false;
+      return GetNotBusyTime() > timestamp;
+    }
+
+    Timestamp GetNotBusyTime() {
+      return start_review_time + average_review_minutes; // TODO correctly add average_review_minutes in minutes.
+    }
+
+   private:
+    bool reviewing_video;
     Timestamp start_review_time;
     int average_review_minutes = 5;
 
   };
 
+
+  void SimulateReviews(
+      EnqueueSignals& simulation_enqueue_signals,
+      RoutingSignals& simulation_routing_signals,
+      VerdictSignals& simulation_verdict_signals,
+      VerdictSignalMap& all_verdict_signal_map,
+      QueueMap& all_queue_map
+  ) {
+    // Steps
+    /*
+    1. add all new enqueue signals to heap.
+    2. Pull signal from heap.
+    3. Check if queue has reviewers availible.
+    4.  if availible reviewers Get new signal from reviewer
+          if new signal is verdict add to simulation verdict signals
+          if new signal is routing signal, add signal to heap.
+    5.  if not availible, get the next time a reviewer is availible. and set signals timestamp to then (update  heap).
+    6. repeate untill no more signals in the heap.
+    */
+
+    Heap heap;
+
+    // Step 1.
+    for (EnqueueSignal& enqueue_signal : simulation_enqueue_signals) {
+      heap.push(Signal(enqueue_signal));
+    }
+
+    while (!heap.empty()) {
+      Signal signal = heap.pop();
+      Queue& queue = all_queue_map[signal.GetQueueId()]; 
+      Reviewer* availible_reviewer = queue.GetAvailableReviewer(signal.GetTimestamp());
+      if (availible_reviewer == nullptr) {
+        signal.SetTimestamp(queue.next_availible_reviewer_time);
+        heap.push(signal);
+      }
+      else {
+        Signal new_signal = availible_reviewer->ReviewEntity(signal, all_verdict_signal_map[signal.GetLifeCycleId]);
+        if (new_signal.has_routing_signal) {
+          simulation_routing_signals.push_back(new_signal.GetRoutingSignal());
+          heap.push(new_signal);
+        }
+        else if (new_signal.has_verdict_signal) {
+          simulation_verdict_signals.push_back(new_signal.GetVerdictSignal());
+        }
+      }
+    }
   }
 
   SimulationOutput SimulateRequest(EnqueueSignals enqueue_signals, ConfigChangeRequest request) {
@@ -141,10 +273,12 @@ namespace youtube_hermes_config_subscriber {
     Videos all_videos = getAllVideos();
     Queues all_queues = getAllQueues();
     EnqueueRules all_enqueue_rules = getAllEnqueueRules();
+    VerdictSignals all_verdict_signals = getAllVerdictSignals();
 
     QueueMap all_queue_map; // Key: QueueId
     VideoMap all_video_map; // Key: VideoId
     EnqueueSignalMap enqueue_signal_map; // Key: VideoId. enqueue_signal_map used in simulation to determine when videos are signaled into the system.
+    VerdictSignalMap all_verdict_signal_map; // Key: LifeCycleId.
 
     // Data determined by the simulation
     Videos simulation_videos;
@@ -165,6 +299,9 @@ namespace youtube_hermes_config_subscriber {
     for (EnqueueSignal& enqueue_signal : enqueue_signals) {
       enqueue_signal_map[enqueue_signal.video_id] = &enqueue_signal;
       simulation_videos.push_back(all_video_map[enqueue_signal.video_id]);
+    }
+    for (VerdictSignal& verdict_signal : all_verdict_signals) {
+      all_verdict_signal_map[verdict_signal.life_cycle_id] = &verdict_signal;
     }
 
     // Update EnqueueRules
@@ -222,43 +359,17 @@ namespace youtube_hermes_config_subscriber {
       simulation_enqueue_signals.push_back(new_enqueue_signal);
     }
 
-    // calculate routing signals and verdict signals
-    // Have reviewer object that hold  which queue they are responsible for
-    // Queue can have list of videos enqueued
-    // Reviewers can have access to SimulationVariables
-    // Update reviewers
-    /*
+    SimulateReviews( 
+      simulation_enqueue_signals,
+      simulation_routing_signals,
+      simulation_verdict_signals,
+      all_verdict_signal_map,
+      all_queue_map
+    );
 
-      loop through all queues, call update_queue function with timestamp
-      (check if any reviewers finished reviewing videos first and move videos to routing target queues, 
-      and create verdict signals if verdict signals)
-      (determine if queue has videos to review and check if reveiwers are availible)
-
-      loop through all reviewers calling update-reveiwer with timestamp
-      if reviewer has no video to review, 
-        take a video (if queue has videos)
-
-      if reviewer has a video, 
-        check finish_review_timestamp
-        if finish_review_timestamp <= current_simulation_timestamp
-          determine (routing or verdict signal)
-          if (routing signal)
-            send video to routing target
-          else
-            create verdict signal
-    */
-
-
+    return SimulationOutput(simulation_enqueue_signals, simulation_routing_signals, simulation_verdict_signals);
   }
 
-// class Simulation {
-//  public:
-//   explicit Simulation(std::vector<EnqueueSignal> enqueue_signals, ConfigChangeRequest request);
-
-//   /// No default construction. Use `Client(std::string pubsub_subscription_link)`
-//   Client() = delete;
- 
-// };
 }  // namespace youtube_hermes_config_subscriber
 
 #endif  // YOUTUBE_HERMES_CONFIG_SUBSCRIBER_SIMULATION_H

@@ -39,13 +39,28 @@ class Queue {
   std::vector<std::int64_t> possible_routes;
 
   // Simulation variables & methods.
-  std::queue<Video*> review_queue;
   std::vector<Reviewer> reviewers;
-  
-  void UpdateSimulation(const Timestamp& timestamp, QueueMap& queue_map, RoutingSignals& routing_signals, VerdictSignals& verdict_signals) {
-    for (Reviewer& reviewer : reviewers) {
-      reviewer.Update(timestamp, queue_map, routing_signals, verdict_signals);
+
+  // If all the reviewers are busy, this is the next Timestamp a reveiwer will be free at.
+  google::cloud::spanner::v1::Timestamp next_availible_reviewer_time;
+
+  *Reviewer GetAvailableReviewer(google::cloud::spanner::v1::Timestamp timestamp) {
+    google::cloud::spanner::v1::Timestamp next_time = timestamp;
+    for (&Reviewer reviewer : reviewers) {
+      if (!reviewer.IsBusy(timestamp)) {
+        return &reviewer;
+      } 
+
+      if (reviewer == reviewers.at(0)) {
+        next_time = reviewer.GetNotBusyTime();
+      } 
+      else if (reviwer.GetNotBusyTime() < next_time) {
+        next_time = reviwer.GetNotBusyTime();
+      }
     }
+
+    next_availible_reviewer_time = next_time;
+    return nullptr;
   }
   
 };

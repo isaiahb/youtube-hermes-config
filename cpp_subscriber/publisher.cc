@@ -31,6 +31,7 @@
 
 namespace youtube_hermes_config_subscriber {
 
+// Creates a ImpactAnalysisResponse protobuf object containing an error message and returns its serialized string.
 std::string getErrorImpactAnalysis(const ConfigChangeRequest& config_change_request, const std::string& error) {
   ImpactAnalysisResponse impact_analysis;
   impact_analysis.set_allocated_request(new ConfigChangeRequest(config_change_request));
@@ -38,25 +39,20 @@ std::string getErrorImpactAnalysis(const ConfigChangeRequest& config_change_requ
   return impact_analysis.SerializeAsString();
 }
 
+// Creates a empty ImpactAnalysisReponse protobuf object and returns its serialized string.
 std::string getEmptyImpactAnalysis(const ConfigChangeRequest& config_change_request) {
   ImpactAnalysisResponse impact_analysis;
   impact_analysis.set_allocated_request(new ConfigChangeRequest(config_change_request));
   return impact_analysis.SerializeAsString();
 }
 
+// Creates a ImpactAnalysisResponse protobuf object containing a QueueImpactAnalysis populated with random sample dummy data
+// and returns its serialized string.
 std::string getDummyImpactAnalysis(const ConfigChangeRequest& config_change_request) {
   using google::protobuf::Timestamp;
 
   ImpactAnalysisResponse impact_analysis;
   impact_analysis.set_allocated_request(new ConfigChangeRequest(config_change_request));
-
-  // Timestamp* start_time = new Timestamp(); 
-  // Timestamp* end_time = new Timestamp(); 
-  // start_time->set_seconds(time(NULL));
-  // start_time->set_nanos(0);
-  // end_time->set_seconds(time(NULL) + 216000);
-  // end_time->set_nanos(0);
-
 
   for (int i = 0; i < 10; i++) {
     QueueImpactAnalysis* queue_impact_analysis = impact_analysis.add_queue_impact_analysis_list();
@@ -71,6 +67,7 @@ std::string getDummyImpactAnalysis(const ConfigChangeRequest& config_change_requ
   return impact_analysis.SerializeAsString();
 }
 
+// Publishes a message to a Pub/Sub topic.
 grpc::Status PublishMessage(const std::string& message_data, const std::string& topic) {
   using grpc::ClientContext;
   using google::pubsub::v1::Publisher;

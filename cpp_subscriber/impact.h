@@ -25,6 +25,7 @@
 #include <iomanip>
 #include <ctime>
 #include <chrono>
+#include <optional>
 
 #include "models/EnqueueRule.h"
 #include "models/EnqueueSignal.h"
@@ -32,8 +33,8 @@
 #include "models/RoutingSignal.h"
 #include "models/VerdictSignal.h"
 #include "models/Video.h"
-
 #include "spanner_handler.h"
+#include "simulation.h"
 
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
 #include "proto/config_change.pb.h"
@@ -50,99 +51,83 @@ namespace youtube_hermes_config_subscriber {
   and returns the calculated SLA for the queue.
   Can be used to calculate previous SLA by passing the current systems 
   enqueue/routing/verdict signals
-  or a estimated New SLA by passing simulated signals.
+  or a estimated New SLA by passing simulated signals. 
 */
 int getSLA(
-        Queue queue, 
-        std::vector<EnqueueSignal> enqueue_signals,
-        std::vector<RoutingSignal> routing_signals,
-        std::vector<VerdictSignal> verdict_signals) {
+        const EntityQueue& queue, 
+        const std::vector<EnqueueSignal>& enqueue_signals,
+        const std::vector<RoutingSignal>& routing_signals,
+        const std::vector<VerdictSignal>& verdict_signals) {
     
     using google::cloud::spanner::v1::sys_time;
+    using google::cloud::spanner::v1::Timestamp;
+
     std::vector<VerdictSignal> q_verdict_signals;
     
-    for (auto signal : verdict_signals) {
-        if (signal.queue_id == queue.id) {
+    for (auto& signal : verdict_signals) {
+        if (signal.queue_id_ == queue.id_) {
             q_verdict_signals.push_back(signal);
         }
     }
 
     double average_sla_min = 0;
     for (VerdictSignal verdict : q_verdict_signals) {
-        if (verdict.queue_id == queue.id) {
-            std::string life_cycle_id = verdict.life_cycle_id;
-            // The routing signal with the latest timestamp in the life cycle id.
-            RoutingSignal routing;
-            // The enqueue signal for the life cycle id.
-            EnqueueSignal enqueue;
-            bool routed = false;
+        std::string life_cycle_id = verdict.life_cycle_id_;
+        std::optional<RoutingSignal> routing;
+        Timestamp enqueue_or_route_time;
 
-            for (auto enqueue_signal : enqueue_signals) {
-                if (enqueue_signal.life_cycle_id == life_cycle_id) {
-                    enqueue = enqueue_signal;
-                    continue;
-                }
+        for (auto& enqueue_signal : enqueue_signals) {
+            if (enqueue_signal.life_cycle_id_ == life_cycle_id) {
+                enqueue_or_route_time = enqueue_signal.create_time_;
+                break;
             }
-
-            for (auto routing_signal : routing_signals) {
-                if (routing_signal.life_cycle_id == life_cycle_id) {
-                    if (!routed) {
-                        routing = routing_signal;
-                        routed = true;
-                    } 
-                    else {
-                        if (routing_signal.create_time > routing.create_time) {
-                            routing = routing_signal;
-                        }
-                    }
-                }
-            }
-            int sla = 50;
-            if (routed) {
-                // Two time variables below are of type:
-                // NSt6chrono10time_pointINS_3_V212system_clockENS_8durationIlSt5ratioILl1ELl1000000000EEEEEE.
-                auto verdict_time = verdict.create_time.get<sys_time<std::chrono::nanoseconds>>().value();
-                auto last_route_time = routing.create_time.get<sys_time<std::chrono::nanoseconds>>().value();
-                sla = (std::chrono::system_clock::to_time_t(verdict_time) - std::chrono::system_clock::to_time_t(last_route_time))/60;
-            } 
-            else {
-                auto verdict_time = verdict.create_time.get<sys_time<std::chrono::nanoseconds>>().value();
-                auto enqueue_time = enqueue.create_time.get<sys_time<std::chrono::nanoseconds>>().value();
-                sla = (std::chrono::system_clock::to_time_t(verdict_time) - std::chrono::system_clock::to_time_t(enqueue_time))/60;
-            }
-            average_sla_min += (sla/q_verdict_signals.size());
         }
+
+        for (auto& routing_signal : routing_signals) {
+            if (routing_signal.life_cycle_id_ == life_cycle_id) {
+
+                if (!routing.has_value() || routing_signal.create_time_ > routing.value().create_time_) {
+                    enqueue_or_route_time = routing_signal.create_time_;
+                    routing = routing_signal;
+                }
+            }
+        }
+        
+        auto verdict_time = verdict.create_time_.get<sys_time<std::chrono::nanoseconds>>().value();
+        auto enqueue_time = enqueue_or_route_time.get<sys_time<std::chrono::nanoseconds>>().value();
+        int sla = (std::chrono::system_clock::to_time_t(verdict_time) - std::chrono::system_clock::to_time_t(enqueue_time))/60;        
+        average_sla_min += ((1.0*sla)/q_verdict_signals.size());
     }
     return average_sla_min;
 }
 
-int getNewSLA(Queue queue);
-
-std::string getImpactAnalysis(const ConfigChangeRequest config_change_request) {
+std::string getImpactAnalysis(const ConfigChangeRequest& config_change_request) {
   using google::protobuf::Timestamp;
 
   ImpactAnalysisResponse impact_analysis;
   impact_analysis.set_allocated_request(new ConfigChangeRequest(config_change_request));
 
-  std::vector<Queue> queues = getAllQueues();
+  std::vector<EntityQueue> queues = getAllQueues();
   std::vector<EnqueueSignal> enqueue_signals = getAllEnqueueSignals();
   std::vector<RoutingSignal> routing_signals = getAllRoutingSignals();
   std::vector<VerdictSignal> verdict_signals = getAllVerdictSignals();
+  std::cout<<"starting simulation"<<std::endl;
+  SimulationOutput simulation_output = SimulateRequest(enqueue_signals, config_change_request);
+  std::cout<<"finished simulation"<<std::endl;
 
   for (auto queue : queues) {
     QueueImpactAnalysis* queue_impact_analysis = impact_analysis.add_queue_impact_analysis_list();
-    queue_impact_analysis->set_queue_id(queue.id);
-    queue_impact_analysis->set_desired_sla_min(queue.desired_SLA);
+    queue_impact_analysis->set_queue_id(queue.id_);
+    queue_impact_analysis->set_desired_sla_min(queue.desired_SLA_);
 
     int prev_sla = getSLA(queue, enqueue_signals, routing_signals, verdict_signals);
     queue_impact_analysis->set_previous_sla_min(prev_sla);
 
-    //TODO (ballah): Create a function to calculate estimated new sla.
-    // The function returns new enqueue/routing/verdict signal lists and we use getSLA()
-    // with the new signal.
+    int new_sla = getSLA(queue, simulation_output.enqueue_signals_, simulation_output.routing_signals_, simulation_output.verdict_signals_);
+    queue_impact_analysis->set_new_sla_min(new_sla);
+
   }
 
-  std::cout << "impact!!! " << impact_analysis.DebugString() << std::endl;
   return impact_analysis.SerializeAsString();
 }
 }  // namespace youtube_hermes_config_subscriber

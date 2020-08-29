@@ -26,11 +26,11 @@ class EnqueueSignal {
 
   explicit EnqueueSignal(){}
 
-  std::string life_cycle_id;
-  google::cloud::spanner::v1::Timestamp create_time;
-  std::string queue_match;
-  std::string video_id;
-  std::string violation_category;
+  std::string life_cycle_id_;
+  google::cloud::spanner::v1::Timestamp create_time_;
+  std::string queue_match_;
+  std::string video_id_;
+  std::string violation_category_;
 };
 
 }  // namespace youtube_hermes_config_subscriber

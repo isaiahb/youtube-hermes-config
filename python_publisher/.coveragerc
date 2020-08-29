@@ -1,0 +1,5 @@
+[run]
+include = /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/web_utils/web_utils.py, /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/message_utils/message_utils.py, /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/config_change_request/config_change_request.py
+
+[report]
+include = /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/web_utils/web_utils.py, /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/message_utils/message_utils.py, /usr/local/google/home/sauloferreira/Development/youtube-hermes-config/publisher/config_change_request/config_change_request.py

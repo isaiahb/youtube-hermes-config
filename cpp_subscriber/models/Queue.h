@@ -17,50 +17,53 @@
 
 #include <string>
 #include <vector>
-#include <queue>
+#include <optional>
 
-#include "simulation.h"
+#include "signal.h"
+#include "./../reviewer.h"
 
 namespace youtube_hermes_config_subscriber {
 
-class Queue {
+class EntityQueue {
  public:
 
-  explicit Queue(){
+  explicit EntityQueue() {
     // Currently assuming every queue has 1 reviewer
-    reviewers.push_back(Reviewer(this));
+    reviewers.push_back(Reviewer());  
   }
 
   // Spanner properties.
-  std::string id;
-  std::string queue_name;
-  int desired_SLA;
-  std::vector<std::string> owners;
-  std::vector<std::int64_t> possible_routes;
+  std::string id_;
+  std::string queue_name_;
+  int desired_SLA_;
+  std::vector<std::string> owners_;
+  std::vector<std::int64_t> possible_routes_;
 
   // Simulation variables & methods.
-  std::vector<Reviewer> reviewers;
+  std::vector<Reviewer> reviewers_;
 
   // If all the reviewers are busy, this is the next Timestamp a reveiwer will be free at.
-  google::cloud::spanner::v1::Timestamp next_availible_reviewer_time;
+  google::cloud::spanner::v1::Timestamp next_availible_reviewer_time_;
 
-  *Reviewer GetAvailableReviewer(google::cloud::spanner::v1::Timestamp timestamp) {
+  std::optional<Reviewer> GetAvailableReviewer(google::cloud::spanner::v1::Timestamp timestamp) {
     google::cloud::spanner::v1::Timestamp next_time = timestamp;
-    for (&Reviewer reviewer : reviewers) {
+    bool time_set = false;
+    for (Reviewer& reviewer : reviewers_) {
       if (!reviewer.IsBusy(timestamp)) {
-        return &reviewer;
+        return std::optional<std::reference_wrapper<Reviewer>>{reviewer};
       } 
 
-      if (reviewer == reviewers.at(0)) {
+      if (!time_set) {
+        time_set = true;
         next_time = reviewer.GetNotBusyTime();
       } 
-      else if (reviwer.GetNotBusyTime() < next_time) {
-        next_time = reviwer.GetNotBusyTime();
+      else if (reviewer.GetNotBusyTime() < next_time) {
+        next_time = reviewer.GetNotBusyTime();
       }
     }
 
-    next_availible_reviewer_time = next_time;
-    return nullptr;
+    next_availible_reviewer_time_ = next_time;
+    return {};
   }
   
 };

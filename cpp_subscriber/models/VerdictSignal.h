@@ -26,10 +26,10 @@ class VerdictSignal {
 
   explicit VerdictSignal(){}
 
-  std::string life_cycle_id;
-  google::cloud::spanner::v1::Timestamp create_time;
-  std::string queue_id;
-  int SLA_min;
+  std::string life_cycle_id_;
+  google::cloud::spanner::v1::Timestamp create_time_;
+  std::string queue_id_;
+  int SLA_min_;
 };
 
 }  // namespace youtube_hermes_config_subscriber

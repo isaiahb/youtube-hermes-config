@@ -31,7 +31,7 @@ std::string Client::get_pubsub_subscription_link() {
   return pubsub_subscription_link_;
 }
 
-//Currently any call to this method when the client is already running is ignored.
+// Any call to this method when the client is already running is ignored.
 void Client::Run(MessageCallback callback) {
   if (!is_running_) {
     this->is_running_ = true;
@@ -59,27 +59,29 @@ void Client::RunThreadFunction(MessageCallback callback) {
     ClientContext context;
     std::unique_ptr<::grpc::ClientReaderWriterInterface<::google::pubsub::v1::StreamingPullRequest, ::google::pubsub::v1::StreamingPullResponse>> stream(stub->StreamingPull(&context));
 
-    // Connect stream to pubsub subscription.
+    // Connect the stream to the Pub/Sub subscription.
     StreamingPullRequest request;
     request.set_subscription(this->pubsub_subscription_link_);
     request.set_stream_ack_deadline_seconds(10);
 
-    // Poll for messages.
+    // Poll for new messages.
     StreamingPullResponse response;
     stream->Write(request);
 
     while (stream->Read(&response)) {
       StreamingPullRequest ack_request;
       for (const ReceivedMessage& message : response.received_messages()) {
+        // Acknowledge and process a new message, if there is data.
         ack_request.add_ack_ids(message.ack_id());
         if (message.has_message()) {
           callback(message.message());
         }
       }
+
       // Acknowledged messages.
       stream->Write(ack_request);
     }
-  }  // while (is_running) loop
+  }  // While (is_running) loop.
   std::cout << "Stopping client RunThreadFunction." << std::endl;
 }
 

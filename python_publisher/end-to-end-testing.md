@@ -1,0 +1,7 @@
+# YouTube Hermes Config Automation
+## **Unit Testing:**
+See web_scraping_utility_test.py. Achieved 94% code coverage.
+
+## **End-to-End Testing:**
+For end-to-end testing, I ran the system with the URL https://b.corp.google.com/issues?q=componentid:889136 , with the intent of verifying the programs ability to correctly scrape valid Buganzer comments from the reporter of each issue under the componentid:889136, and publishing through Pub/Sub as a serialized Protocol Buffer object. In order to prepare for testing, I first verified that no issues under the componentid had any valid comments that would be scraped. Next I added valid template comments for EnqueueRule and RoutingRule with multiple change requests being asked in each, as well as one valid QueueInfo template. After this, I added some edge cases of invalid templates: misspelled specifiers on lines, and shorter than necessary templates. It is impossible to enter an empty comment on Buganizer so therefore I did not have to worry about this edge case. Finally I ran the program on the URL, and verified that I received exactly three messages in the terminal notifying that a message was successfully sent, one for each of the three types of configuration changes. Next I checked Pub/Sub on Pantheon to ensure that I could see the messages under the Pub/Sub topic I sent it to. Finally I asked Isaiah to run his C++ program to pull the messages, deserialize them, and ensure that all of the attributes of the Protocol Buffer object match those of the original templates commented on Buganizer. 
+<br/><br/>

@@ -30,10 +30,10 @@ namespace youtube_hermes_config_subscriber {
   public:
     explicit SimulationOutput() {}
     explicit SimulationOutput(
-        std::vector<EnqueueSignal> enqueue_signals,
-        std::vector<RoutingSignal> routing_signals,
-        std::vector<VerdictSignal> verdict_signals)
-        : enqueue_signals(enqueue_signals), routing_signals(routing_signals), verdict_signals(verdict_signals) {}
+        std::vector<EnqueueSignal> enqueue_signals_,
+        std::vector<RoutingSignal> routing_signals_,
+        std::vector<VerdictSignal> verdict_signals_)
+        : enqueue_signals(enqueue_signals_), routing_signals(routing_signals_), verdict_signals(verdict_signals_) {}
 
     std::vector<EnqueueSignal> enqueue_signals;
     std::vector<RoutingSignal> routing_signals;

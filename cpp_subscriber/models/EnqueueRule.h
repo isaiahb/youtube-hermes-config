@@ -25,9 +25,9 @@ class EnqueueRule {
  public:
 
   // Spanner Table Columns
-  std::string id;
-  std::string queue_id;
-  std::int64_t priority;
+  std::string id_;
+  std::string queue_id_;
+  std::int64_t priority_;
 
   void SetRule(std::vector<std::string> features) {
     this->rule = features;
@@ -39,7 +39,7 @@ class EnqueueRule {
   }
 
   // Simulation helper functions
-  bool IsFeaturesExactMatch(const std::vector<std::string>& features) {
+  bool const IsFeaturesExactMatch(const std::vector<std::string>& features) {
     if (rule.size() != features.size()) return false;
 
     for (const std::string& feature : features) {
@@ -50,7 +50,16 @@ class EnqueueRule {
     return true;
   }
 
-  bool DoFeaturesMatch(const std::vector<std::string>& features) {
+  bool HasFeature(const std::string& feature) {
+    for (const std::string& r : rule) {
+      if (feature == r) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool const DoFeaturesMatch(const std::vector<std::string>& features) {
     // Currently assuming that the rule is a list of features that must match the video,
     // and the rule does not specify "!feature".
 
@@ -59,9 +68,9 @@ class EnqueueRule {
     if (rule.size() > features.size()) return false;
 
     // Determine if the list of features meet the rule requirments.
-    int features_matched = 0;
+    long unsigned int features_matched = 0;
     for (const std::string& feature : features) {
-      if (rule_map.find(feature) != rule_map.end()) {
+      if (HasFeature(feature)) {
         features_matched++;
         if (features_matched == rule.size()) {
           return true;
@@ -74,7 +83,7 @@ class EnqueueRule {
 
   private: 
     // Stores a map of the rule features to improve runtime speed of Mathing Features methods.
-    std::map<std::string, bool> rule_map; 
+    std::unordered_map<std::string, bool> rule_map; 
     std::vector<std::string> rule;
 
     void UpdateRuleMap() {

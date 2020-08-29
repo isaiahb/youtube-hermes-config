@@ -38,7 +38,7 @@ namespace youtube_hermes_config_subscriber {
 
 std::vector<EnqueueRule> getAllEnqueueRules();
 std::vector<EnqueueSignal> getAllEnqueueSignals();
-std::vector<Queue> getAllQueues();
+std::vector<EntityQueue> getAllQueues();
 std::vector<RoutingSignal> getAllRoutingSignals();
 std::vector<VerdictSignal> getAllVerdictSignals();
 std::vector<Video> getAllVideos();

@@ -26,10 +26,10 @@ class RoutingSignal {
 
   explicit RoutingSignal(){}
 
-  std::string life_cycle_id;
-  google::cloud::spanner::v1::Timestamp create_time;
-  std::string from_queue;
-  std::string to_queue;
+  std::string life_cycle_id_;
+  google::cloud::spanner::v1::Timestamp create_time_;
+  std::string from_queue_;
+  std::string to_queue_;
 };
 
 }  // namespace youtube_hermes_config_subscriber

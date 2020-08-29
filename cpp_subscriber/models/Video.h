@@ -28,7 +28,7 @@ class Video {
   explicit Video(){}
 
   // Spanner properties
-  std::string id;
+  std::string id_;
   std::vector<std::string> features;
 
   // Simulation properties

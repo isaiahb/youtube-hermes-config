@@ -3,19 +3,30 @@ import "google/protobuf/timestamp.proto";
 import "config_change.proto";
 
 message QueueImpactAnalysis {
-  string queue_id = 1; // The id for the queue.
-  int32 desired_SLA_min = 2; // Desired SLA for the queue (in minutes).
-  int32 previous_SLA_min = 3; // The Calculated SLA for the queue (in minutes) before any configuraion changes are applied.
-  int32 new_SLA_min = 4; // The Calculated SLA for the queue (in minutes) after the configuraion changes are applied.
-  int32 previous_avg_video_volume_per_hour = 5; // The Volume of video traffic (Videos/Hour) before the configuration changes.
+  // The id for the queue.
+  string queue_id = 1;
+  // Desired SLA for the queue (in minutes).
+  int32 desired_SLA_min = 2;
+  // The Calculated SLA for the queue (in minutes) before any configuration changes are applied.
+  int32 previous_SLA_min = 3;
+  // The Calculated SLA for the queue (in minutes) after the configuration changes are applied.
+  int32 new_SLA_min = 4;
+  // The Volume of video traffic (Videos/Hour) before the configuration changes.
+  int32 previous_avg_video_volume_per_hour = 5;
+  // The Volume of video traffic (Videos/Hour) after the configuration changes.
   int32 new_avg_video_volume_per_hour = 6;
 
-  google.protobuf.Timestamp analysis_period_start = 7; // The starting time stamp for time period the impact analysis was evaluated for.
-  google.protobuf.Timestamp analysis_period_end = 8; // The ending time stamp for time period the impact analysis was evaluated for.
+  // The starting time stamp for the time period the impact analysis was evaluated for.
+  google.protobuf.Timestamp analysis_period_start = 7;
+  // The ending time stamp for the time period the impact analysis was evaluated for.
+  google.protobuf.Timestamp analysis_period_end = 8;
 }
 
 message ImpactAnalysisResponse {
-  string error_message = 1; // If the impact analysis succeeds then error_message will be empty, otherwise the error message explains why the impact analysis failed.
-  repeated QueueImpactAnalysis queue_Impact_analysis_list = 2; // The list of affected queues and details on the impact analysis for the queues.
-  ConfigChangeRequest request = 3; // The original ConfigChangeRequest object that the analysis is based on. 
+  // If the impact analysis succeeds then error_message will be empty, otherwise the error message explains why the impact analysis failed.
+  string error_message = 1;
+  // The list of affected queues and details on the impact analysis for the queues.
+  repeated QueueImpactAnalysis queue_Impact_analysis_list = 2;
+  // The original ConfigChangeRequest object that the analysis is based on.
+  ConfigChangeRequest request = 3;
 }

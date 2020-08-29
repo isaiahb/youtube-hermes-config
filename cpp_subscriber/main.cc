@@ -17,7 +17,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <ctime>
 
+#include "absl/time/time.h"
 #include "absl/memory/memory.h"
 #include "client.h"
 #include "proto/config_change.pb.h"
@@ -41,11 +43,7 @@ int main() {
   using youtube_hermes_config_subscriber::getAllEnqueueRules;
   using youtube_hermes_config_subscriber::getImpactAnalysis;
 
-  ConfigChangeRequest config_change_request;
-  getImpactAnalysis(config_change_request);
-
-  // Creates a Client that polls pubsub and Runs it 
-  // passing the MessageProcessor function as a callback.
+  // Creates a Client that polls Pub/Sub for messages and passes them to the MessageProcessor.
   using google::pubsub::v1::PubsubMessage;
   using youtube_hermes_config_subscriber::Client;
   using youtube_hermes_config_subscriber::MessageProcessor;
@@ -58,7 +56,8 @@ int main() {
   // to close after calling this Stop method.
   // We will not need to call Stop in production,
   // in Prodoction the client will run indefinitly.
-  client.Stop();
+
+  client.Stop(); // Remove this line to keep program alive.
   
   client.JoinThread();
   std::cout << "Program Terminating" << std::endl;

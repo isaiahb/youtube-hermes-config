@@ -1,3 +1,48 @@
+<<<<<<< HEAD
+
+# Ignore IDE files
+/.vscode/
+=======
+# Ignore log files
+*.log
+
+# Ignore proto generated files
+config_change_request/config_change_pb2.py
+>>>>>>> cec7816f2935823b84afaffa56b83e4a3106f786
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+ 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore proto generated files
+config_change_request/config_change_pb2.py
+
 # Ignore backup files.
 *~
 # Ignore Vim swap files.
@@ -27,3 +72,8 @@ bazel.iml
 # User-specific .bazelrc
 */user.bazelrc
 user.bazelrc
+
+python_subscriber/impact_analysis_response_pb2.py
+python_subscriber/config_change_pb2.py
+python_publisher/config_change_request/config_change_pb2.py
+

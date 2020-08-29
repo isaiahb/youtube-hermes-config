@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+message ConfigChangeRequest {
+  oneof ConfigType {
+    EnqueueRules enqueue_rules = 1;
+    RoutingTargets routing_targets = 2;
+    QueueInfo queue_info = 3;
+  }
+  // The type of config change request.
+  // "EnqueueRules", "RoutingTargets", or "QueueInfo".
+  string config_type = 4;
+  // The id of the Buganizer issue.
+  string issue_id = 5;
+}
+
+message EnqueueRules {
+  message Change {
+    // The method of the EnqueueRules.
+    // ‘Add’, ‘Remove’, or 'Set'.
+    string method = 1;
+    // The reporter of the issue.
+    // Eg. johndoe@google.com
+    string reporter = 2;
+    // The id(s) of the queue(s) for one EnqueueRule change.
+    // Eg. 'Q1, Q2, Q3'
+    string queue = 3;
+    // Feature(s) of the video
+    // Eg. 'f1, f2, f3'
+    repeated string features = 4;
+    // The unique priority value of this change over the others.
+    // Eg. '1'
+    int32 priority = 5;
+  }
+  repeated Change changes = 6;
+}
+
+message RoutingTargets {
+  // Reflects how much the issue affects the use of the product.
+  Severity severity = 1;
+  enum Severity {
+    S0 = 0;
+    S1 = 1;
+    S2 = 2;
+    S3 = 3;
+    S4 = 4;
+  }
+  // Version(s) of the product affected by this Buganizer issue (comma-separated list).
+  repeated string found_in = 2;
+  // If this issue occurs in production.
+  bool in_prod = 3;
+  // The reporter of the Buganizer issue.
+  string reporter = 4;
+  // The verifier of the Buganizer issue.
+  string verifier = 5;
+  // The version(s) of the product in which the Buganizer issue should be fixed (comma-separated list).
+  repeated string targeted_to = 6;
+  // The id of the affected queue.
+  int64 queue_id = 7;
+  // The id(s) of the possible queue routes to add.
+  repeated int64 add_queues_to_route_to =8;
+  // The id(s) of the possible queue routes to remove.
+  repeated int64 remove_queues_to_route_to = 9;
+}
+
+message QueueInfo {
+  // Reflects how much the issue affects the use of the product.
+  Severity severity = 1;
+  enum Severity {
+    S0 = 0;
+    S1 = 1;
+    S2 = 2;
+    S3 = 3;
+    S4 = 4;
+  }
+  // Version(s) of the product affected by this Buganizer issue (comma-separated list).
+  repeated string found_in = 2;
+  // If this issue occurs in production.
+  bool in_prod = 3;
+  // The reporter of the Buganizer issue.
+  string reporter = 4;
+  // The verifier of the Buganizer issue.
+  string verifier = 5;
+  // The version(s) of the product in which the Buganizer issue should be fixed (comma-separated list).
+  repeated string targeted_to = 6;
+  // The id of the affected queue.
+  int64 queue_id = 7;
+  // The MDB group name of the Buganizer issue.
+  string mdb_group_name = 8;
+  // The Ops Owner of the Buganizer issue.
+  string ops_owner = 9;
+  // The GVO Owner of the Buganizer issue.
+  string gvo_owner = 10;
+  // The Tech Owner of the Buganizer issue.
+  string tech_owner = 11;
+  // Wheter or not the queue is visible on the dashboard.
+  bool is_dashboard_queue = 12;
+  // The number of reviews needed per item.
+  int64 reviews_per_item = 13;
+  // The fragment name of the item.
+  string fragment_name = 14;
+  // The amount of time in seconds before the item expires.
+  int64 item_expiry_sec = 15;
+  // Whether or not experimental review is enabled.
+  bool is_experimental_review_enabled = 16;
+  // The experimental probability of the item.
+  int64 experimental_probability = 17;
+}

@@ -14,7 +14,7 @@ TEST(MessageProcessor, EnqueueRuleTest) {
   using youtube_hermes_config_subscriber::MessageProcessor;
   using youtube_hermes_config_subscriber::MockMessage;
 
-  // Create a ConfigChangeRequest object for MockMessage to serialize to string.
+  // Create a ConfigChangeRequest object with an EnqueueRule change for MockMessage to serialize to string.
   ConfigChangeRequest config;
   EnqueueRule_Change* change = config.mutable_enqueue_rule()->add_changes();
   change->set_method("Add");
@@ -29,6 +29,7 @@ TEST(MessageProcessor, EnqueueRuleTest) {
   StatusOr<ConfigChangeRequest> request = MessageProcessor<MockMessage>(message);
   ConfigChangeRequest config_change_request = request.ValueOrDie();
 
+  // Check that the MockMessages match.
   EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
 }
 
@@ -39,7 +40,7 @@ TEST(MessageProcessor, RoutingRuleTest) {
   using youtube_hermes_config_subscriber::MessageProcessor;
   using youtube_hermes_config_subscriber::MockMessage;
 
-  // Create ConfigChangeRequest object for MockMessage to serialize to string.
+  // Create ConfigChangeRequest object with a RoutingRule change for MockMessage to serialize to string.
   ConfigChangeRequest config;
   RoutingRule_Change* change = config.mutable_routing_rule()->add_changes();
   change->set_method("Add");
@@ -53,6 +54,7 @@ TEST(MessageProcessor, RoutingRuleTest) {
   StatusOr<ConfigChangeRequest> request = MessageProcessor<MockMessage>(message);
   ConfigChangeRequest config_change_request = request.ValueOrDie();
 
+  // Check that the MockMessages match.
   EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
 }
 
@@ -63,7 +65,7 @@ TEST(MessageProcessor, QueueInfoTest) {
   using youtube_hermes_config_subscriber::MessageProcessor;
   using youtube_hermes_config_subscriber::MockMessage;
 
-  // Create ConfigChangeRequest object for MockMessage to serialize to string.
+  // Create ConfigChangeRequest object with a QueueInfo change for MockMessage to serialize to string.
   ConfigChangeRequest config;
   QueueInfo_Change* change = config.mutable_queue_info()->add_changes();
   change->set_method("Add");
@@ -76,6 +78,7 @@ TEST(MessageProcessor, QueueInfoTest) {
   StatusOr<ConfigChangeRequest> request = MessageProcessor<MockMessage>(message);
   ConfigChangeRequest config_change_request = request.ValueOrDie();
 
+  // Check that the MockMessages match.
   EXPECT_EQ(MessageDifferencer::Equals(config_change_request, config), true);
 }
 
@@ -85,12 +88,13 @@ TEST(MessageProcessor, InvalidTest) {
   using youtube_hermes_config_subscriber::MessageProcessor;
   using youtube_hermes_config_subscriber::MockMessage;
 
-  // Create Empty/Invalid ConfigChangeRequest object for MockMessage to serialize to string.
+  // Create a ConfigChangeRequest object with a Empty/Invalid change for MockMessage to serialize to string.
   ConfigChangeRequest config;
 
   // Create MockMessage and obtain deserialized config request from MessageProcessor function.
   MockMessage message = MockMessage(config);
   StatusOr<ConfigChangeRequest> config_change_request = MessageProcessor<MockMessage>(message);
 
+  // Check that the status of the config change request is ok.
   EXPECT_FALSE(config_change_request.ok());
 }

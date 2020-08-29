@@ -24,8 +24,13 @@ cc_library(
   name = "subscriber-lib",
   srcs = [
     "spanner_handler.cc",
+    "simulation.cc",
     "client.cc", "mock_message.cc", "proto/config_change.pb.cc", "proto/impact_analysis_response.pb.cc", "publisher.cc"],
   hdrs = [
+    "signal.h",
+    "reviewer.h",
+    "simulation.h",
+    "simulation_output.h",
     "models/EnqueueRule.h",
     "models/EnqueueSignal.h",
     "models/Queue.h",

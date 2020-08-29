@@ -1,10 +1,9 @@
 # YouTube Hermes Config Automation
-## C++ Pubsub Subscriber
+## C++ Pub/Sub Subscriber
  
 ## Functionality:<br/>
-This program creates and runs a pubsub client object which subscribes to a PubSub topic and calls a callback function whenever it receives a new message.
+This program creates and runs a Pub/Sub client object which subscribes to a specified Pub/Sub topic containing a configuration change request. Once it recives a message it gets processed in a callback function to evaluate the change request.
  
-### Todo: add and elaborate on Impact Analysis component and PubSub Response Component.
 <br/><br/>
  
 **Setup Instructions:**
@@ -52,7 +51,7 @@ Install `bazel` a build tool used to build and run this project and its dependen
  
 #### Installing & Logging into gcloud from terminal
 1. *Installing gcloud:* https://cloud.google.com/sdk/install
-2. *Using gcloud to set the project and login to authorize:* https://cloud.google.com/sdk/gcloud/reference/auth/login
+2. *Using gcloud to set thse project and login to authorize:* https://cloud.google.com/sdk/gcloud/reference/auth/login
  
 ## Install gcloud on Linux
 	$ curl https://sdk.cloud.google.com
@@ -98,29 +97,29 @@ On Mac os to run unit tests, use command.
  
 The program is composed of the following components.
  
-- PubSub Subscriber
-- MessageProssesor
+- Pub/Sub Subscriber
+- Message Processor
 - Impact Analysis
-- PubSub Publisher (Impact Analysis Response)
+- Pub/Sub Publisher (Impact Analysis Response)
  
 ```
-[PubSub Subscriber] -> [Message Processor] -> [Impact Analysis] -> [PubSub Publisher]
+[Pub/Sub Subscriber] -> [Message Processor] -> [Impact Analysis] -> [Pub/Sub Publisher]
  
 [Historical Spanner DB] -> [Impact Analysis]
 ```
 <br>
 
 # Component Roles
-## PubSub Subscriber (Client)
-The clients job is to subscribe to a specified pubsub topic in order to receive configuration change requests. The cloud PubSub topic will receive messages from the pubsub publisher containing a serialized ConfigChangeRequest protobuf object.
+## Pub/Sub Subscriber (Client)
+The clients job is to subscribe to a specified Pub/Sub topic in order to receive configuration change requests. The cloud Pub/Sub topic will receive messages from the Pub/Sub publisher containing a serialized ConfigChangeRequest protobuf object and pass it to the Message Processor.
  
  
 ## Message Processor
-The Message Processor component is in charge of taking the PubSub Message, extracting the serialized string, deserializing the ConfigChangeRequest object, and passing it to the Impact Analysis Component.
+The Message Processor component is in charge of processing the Pub/Sub Message. This involves first extracting the serialized ConfigChangeRequest object from the message data field, deserializing the object, and passing it to the Impact Analysis component.
  
 ## Impact Analysis
-The Impact analysis component is responsible for receiving a ConfigChangeRequest object, connecting to the Historical Spanner Database to get historical video traffic, and calculating the impact on the system with the requested configuration changes. The Impact Analysis will pass an ImpactAnalysisResult object to the Publisher Component.
+The Impact analysis component is responsible for receiving a ConfigChangeRequest object, connecting it to the Historical Spanner Database in order to get historical video traffic, and calculating the impact of the change on the system. The Impact Analysis will then create a ImpactAnalysisResult protobuf object, and pass it to the Pub/Sub Publisher component.
  
-## PubSub Publisher
-The PubSub Publisher component is responsible for receiving a ImpactAnalysisResult object, serializing it, and publishing it as a message to the specified pubsub topic as a response to the original configuration change request.
+## Pub/Sub Publisher
+The Pub/Sub Publisher component is responsible for receiving an ImpactAnalysisResult object, serializing it, and publishing it as a message to the specified Pub/Sub topic as a response to the original configuration change request.
 

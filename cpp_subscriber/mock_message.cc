@@ -24,6 +24,7 @@ namespace youtube_hermes_config_subscriber {
 MockMessage::MockMessage(ConfigChangeRequest const& config) {
   config.SerializeToString(&data_);
 }
+
 std::string MockMessage::data() const {
   return data_;
 }

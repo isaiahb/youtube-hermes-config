@@ -12,7 +12,6 @@ Once the bug is created, the request is automatically sent to CAT where it is pr
 
 **Setup Instructions:**
 -------------------------------------------------------------------------------
-
 **Authentication:**
 
 This program requires authentication to be setup. Refer to the
